@@ -76,36 +76,62 @@ plt.show()
 # attendi 1 minuto prima di eseguire nuovamente l'algoritmo
 time.sleep(60)
 
+# raccogli i dati di prezzo di ETH per un periodo di tempo sufficientemente lungo
+start_time = "2022-01-01 00:00:00"
+end_time = "2022-12-31 23:59:59"
+klines = client.futures_klines(symbol="ETHUSDT", interval=Client.KLINE_INTERVAL_1MINUTE, startTime=start_time, endTime=end_time)
+# estrai solo i prezzi di chiusura
+closing_prices = [float(kline[4]) for kline in klines]
+# salva i prezzi di chiusura in un file CSV
+with open("eth_prices.csv", "w") as f:
+  for price in closing_prices:
+    f.write(str(price) + "\n")
+
+# utilizza solo il prezzo di chiusura come caratteristica
+features = closing_prices
+# normalizza i dati delle caratteristiche
+max_price = max(features)
+min_price = min(features)
+features = [(price - min_price) / (max_price - min_price) for price in features]
+# salva le caratteristiche normalizzate in un file CSV
+with open("eth_features.csv", "w") as f:
+  for feature in features:
+    f.write(str(feature) + "\n")
+
+# utilizza una rete neurale come modello di machine learning
+from sklearn.neural_network import MLPRegressor
+model = MLPRegressor(hidden_layer_sizes=(10, 10), max_iter=1000)
+
+# utilizza la validazione incrociata per determinare i migliori iperparametri per il modello
+from sklearn.model_selection import GridSearchCV
+parameters = {
+  "hidden_layer_sizes": [(10, 10), (20, 20), (30, 30)],
+  "max_iter": [500, 1000, 1500]
+}
+grid_search = GridSearchCV(model, parameters, cv=5)
+grid_search.fit(
+
+
+
+from sklearn.model_selection import GridSearchCV
+
+# definisci la griglia di iperparametri da testare
+parameters = {
+  "hidden_layer_sizes": [(10, 10), (20, 20), (30, 30)],
+  "max_iter": [500, 1000, 1500]
+}
+
+# utilizza la Grid Search per selezionare i migliori iperparametri
+grid_search = GridSearchCV(model, parameters, cv=5)
+grid_search.fit(features, labels)
+
+# stampa i migliori iperparametri
+print("I migliori iperparametri sono:", grid_search.best_params_)
+
+
+
+
 esegui l'algoritmo di trading
 invest(client, cash, eth_balance)
-vendi ETH quando la previsione è negativa e il prezzo è superiore a una soglia specifica
-elif prediction < 0 and eth_price > THRESHOLD_SELL:
-# specifica gli ordini di stop loss e take profit
-stop_loss = eth_price * 1.05
-take_profit = eth_price * 0.95
-# imposta l'ordine di vendita
-order = client.futures_order(
-symbol='ETHUSDT',
-side=binance.enums.SIDE_SELL,
-quantity=eth_balance,
-stopPrice=stop_loss,
-takeProfitPrice=take_profit,
-type=binance.enums.ORDER_TYPE_STOP_LOSS_TAKE_PROFIT,
-timeInForce=binance.enums.TIME_IN_FORCE_GTC
-)
-# aggiorna il saldo in denaro e il numero di ETH in base all'ordine eseguito
-eth_balance = order['executedQty']
-cash = order['cummulativeQuoteQty']
 
-visualizza i grafici di denaro e ETH ogni 10 minuti
-if i % 10 == 0:
-plt.plot(cash)
-plt.plot(eth_balance)
-plt.show()
-
-attendi 1 minuto prima di eseguire nuovamente l'algoritmo
-time.sleep(60)
-
-esegui l'algoritmo di trading
-invest(client, cash, eth_balance)
 
